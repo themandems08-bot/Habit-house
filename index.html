@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Habit House — a habit garden for two</title>
+<meta name="description" content="A shared habit tracker for couples: workouts, reading, learning, and a garden that grows with you.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3C5844">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#24312A; --parchment:#F1E9D8; --card:#FAF6EC;
+    --moss:#3C5844; --moss-dark:#26392C; --berry:#A24E5C; --gold:#C99A3E;
+    --line: rgba(36,49,42,0.14); --accent: var(--berry); --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--parchment); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased; padding-bottom:60px; }
+  h1,h2,h3,.serif{ font-family:'Fraunces', serif; }
+  a{color:inherit;}
+  button{ font-family:inherit; cursor:pointer; }
+  ::selection{ background: var(--gold); color:var(--ink); }
+
+  /* ---------- gate (signup/login) ---------- */
+  .gate{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .gate-card{
+    background: var(--card); border:1px solid var(--line); border-radius: var(--radius);
+    padding: 28px 24px; max-width: 380px; width:100%;
+  }
+  .gate-card h1{ font-size:26px; font-weight:500; margin:0 0 4px; }
+  .gate-card .lede{ font-size:13.5px; color: rgba(36,49,42,0.6); margin:0 0 20px; }
+  .gate-card label{ display:block; font-size:12.5px; color: rgba(36,49,42,0.6); margin: 14px 0 6px; }
+  .gate-card input, .gate-card select{
+    width:100%; border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+    font-size:15px; font-family:inherit; background:transparent; color:var(--ink);
+  }
+  .gate-card input:focus, .gate-card select:focus{ outline:none; border-color:var(--accent); }
+  .gate-card button.primary{
+    width:100%; margin-top:20px; background: var(--moss); color:#fff; border:none;
+    border-radius:8px; padding:11px; font-size:14.5px; font-weight:500;
+  }
+  .gate-card .switcher{ margin-top:14px; text-align:center; font-size:12.5px; color: rgba(36,49,42,0.55); }
+  .gate-card .switcher button{ background:none;border:none;color:var(--berry); text-decoration:underline; font-size:12.5px; padding:0; }
+  .gate-error{ color: var(--berry); font-size:12.5px; margin-top:10px; }
+  .gate-note{ font-size:11.5px; color: rgba(36,49,42,0.45); margin-top:16px; line-height:1.5; }
+  .pin-hint{ font-size:11.5px; color: rgba(36,49,42,0.45); margin-top:4px; }
+  .who-existing{ font-size:12.5px; color: rgba(36,49,42,0.6); margin: 4px 0 0; }
+
+  header.top{ padding: 28px 20px 18px; max-width: 880px; margin: 0 auto; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+  header.top .title h1{ font-size: clamp(28px, 5vw, 38px); font-weight:500; margin:0 0 2px; letter-spacing:-0.01em; }
+  header.top .title p{ margin:0; color: rgba(36,49,42,0.62); font-size:14.5px; }
+  .head-btns{ display:flex; gap:8px; flex-shrink:0; }
+  .icon-btn{ background:none; border:1.5px solid var(--line); width:40px;height:40px; border-radius:50%; display:flex;align-items:center;justify-content:center; font-size:18px; transition: border-color .15s ease, transform .15s ease; }
+  .icon-btn:hover{ border-color: var(--accent); }
+  .icon-btn:active{ transform: scale(0.94); }
+
+  main{ max-width: 880px; margin:0 auto; padding: 0 20px; }
+
+  .status-bar{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:12.5px; color: rgba(36,49,42,0.6); margin-bottom:16px; }
+  .status-bar .left{ display:flex; align-items:center; gap:8px; }
+  .dot{ width:8px;height:8px;border-radius:50%; background:#B0A88E; flex-shrink:0; }
+  .dot.live{ background:#4C8B5F; }
+  .status-bar button{ background:none;border:none; color:var(--berry); font-size:12.5px; text-decoration:underline; padding:0; }
+
+  .garden-panel{ background: linear-gradient(180deg, #EFE7D2 0%, var(--card) 100%); border:1px solid var(--line); border-radius: var(--radius); padding: 22px 22px 16px; margin-bottom: 18px; position:relative; overflow:hidden; }
+  .garden-row{ display:flex; align-items:flex-end; justify-content:center; gap: clamp(6px, 2vw, 14px); height: 118px; margin: 6px 0 4px; }
+  .garden-stage{ font-size: 40px; line-height:1; }
+  .garden-caption{ text-align:center; font-size:13.5px; color: rgba(36,49,42,0.65); margin-top:6px; }
+  .garden-caption b{ color: var(--ink); font-weight:600; }
+  .ground-line{ height:1px; background: var(--line); margin: 0 -22px; }
+
+  .activity{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 18px; }
+  .activity h3{ font-size:14px; font-weight:600; margin:0 0 8px; color: rgba(36,49,42,0.75); }
+  .activity ul{ list-style:none; margin:0; padding:0; }
+  .activity li{ font-size:13.5px; padding:4px 0; display:flex; justify-content:space-between; gap:10px; }
+  .activity li .when{ color: rgba(36,49,42,0.45); font-size:12px; white-space:nowrap; }
+  .activity .empty{ font-size:13px; color: rgba(36,49,42,0.45); }
+
+  .rows{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 620px){ .rows{ grid-template-columns: 1fr; } }
+  .person-card{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 14px; position:relative; }
+  .person-card.is-you{ border-color: var(--accent); }
+  .person-head{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom: 4px; }
+  .person-head h2{ font-size:19px; font-weight:500; margin:0; }
+  .person-sub{ font-size:12px; color: rgba(36,49,42,0.5); margin: 0 0 10px; }
+  .streak-pill{ font-size:12.5px; font-weight:600; color: var(--ink); background: rgba(201,154,62,0.22); border-radius: 20px; padding: 3px 10px; white-space:nowrap; }
+  .you-badge{ position:absolute; top:14px; right:14px; font-size:10.5px; font-weight:600; color: var(--accent); text-transform:none; }
+  .habit-list{ list-style:none; margin:0; padding:0; }
+  .habit-row{ display:flex; align-items:center; gap:10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .habit-row:last-child{ border-bottom:none; }
+  .habit-check{ width:22px;height:22px; border-radius:7px; border:1.5px solid rgba(36,49,42,0.35); background:none; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--card); transition: background .15s ease, border-color .15s ease; }
+  .habit-check.done{ background: var(--moss); border-color: var(--moss); color:#fff; }
+  .habit-name{ flex:1; font-size:14.5px; }
+  .habit-streak{ font-size:12px; color: rgba(36,49,42,0.5); min-width:20px; text-align:right;}
+  .habit-del{ background:none; border:none; color: rgba(36,49,42,0.28); font-size:15px; padding:0 2px; line-height:1; }
+  .habit-del:hover{ color: var(--berry); }
+  .add-habit{ display:flex; gap:8px; margin-top:12px; }
+  .add-habit input{ flex:1; border:1px solid var(--line); background:transparent; border-radius:8px; padding:7px 10px; font-size:13.5px; color:var(--ink); font-family:inherit; }
+  .add-habit input:focus{ outline:none; border-color:var(--accent); }
+  .add-habit button{ border:1px solid var(--line); background:transparent; border-radius:8px; padding:7px 12px; font-size:13px; color:var(--ink); }
+  .add-habit button:hover{ border-color: var(--accent); }
+
+  section.journal{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 16px; margin-bottom: 20px; }
+  .journal h2{ font-size:19px; font-weight:500; margin:0 0 4px; }
+  .journal .sub{ font-size:13px; color: rgba(36,49,42,0.55); margin:0 0 14px; }
+  .prompt-box{ background: rgba(162,78,92,0.08); border:1px dashed rgba(162,78,92,0.35); border-radius:10px; padding:10px 12px; font-size:13.5px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .prompt-box button{ background:none;border:none;color:var(--berry);font-size:12.5px;font-weight:600; text-decoration:underline; flex-shrink:0; }
+  .entries{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; max-height:280px; overflow-y:auto; }
+  .entry{ border-left: 3px solid var(--moss); padding: 4px 0 4px 12px; }
+  .entry.from-2{ border-left-color: var(--berry); }
+  .entry .meta{ font-size:11.5px; color: rgba(36,49,42,0.5); margin-bottom:2px; }
+  .entry .text{ font-size:14px; }
+  .entry-form{ display:flex; gap:8px; }
+  .entry-form input{ flex:1; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13.5px; font-family:inherit; }
+  .entry-form input:focus{ outline:none; border-color:var(--accent); }
+  .entry-form button{ background: var(--moss); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:500; }
+
+  section.reminders{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 20px; }
+  section.reminders h2{ font-size:19px; font-weight:500; margin:0 0 4px; }
+  section.reminders .sub{ font-size:13px; color: rgba(36,49,42,0.55); margin:0 0 14px; }
+  .rem-list{ list-style:none; margin:0 0 12px; padding:0; }
+  .rem-row{ display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+  .rem-row:last-child{ border-bottom:none; }
+  .rem-row .tag{ background: rgba(60,88,68,0.12); border-radius:6px; padding:2px 7px; font-size:11.5px; font-weight:600; }
+  .rem-row .label{ flex:1; }
+  .rem-del{ background:none;border:none;color: rgba(36,49,42,0.28); font-size:15px; }
+  .rem-del:hover{ color: var(--berry); }
+  .rem-form{ display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:8px; margin-bottom:8px; }
+  @media (max-width:560px){ .rem-form{ grid-template-columns: 1fr 1fr; } }
+  .rem-form select, .rem-form input{ border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:13px; font-family:inherit; background:transparent; }
+  .rem-form input[type=text]{ grid-column: 1 / -1; }
+  .rem-form button{ background: var(--moss); color:#fff; border:none; border-radius:8px; padding:8px 12px; font-size:13px; grid-column: 1 / -1; }
+  .notif-btn{ font-size:12.5px; color: var(--berry); background:none; border:none; text-decoration:underline; padding:0; }
+
+  .journal-note, .rem-note{ font-size:12px; color: rgba(36,49,42,0.45); margin-top:6px; line-height:1.5; }
+
+  .drawer-backdrop{ position:fixed; inset:0; background: rgba(36,49,42,0.35); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:20; }
+  .drawer-backdrop.open{ opacity:1; pointer-events:auto; }
+  .drawer{ position:fixed; top:0; right:0; height:100%; width:min(340px, 88vw); background: var(--parchment); border-left:1px solid var(--line); transform: translateX(100%); transition: transform .25s ease; z-index:21; padding: 22px 20px; overflow-y:auto; }
+  .drawer.open{ transform: translateX(0); }
+  .drawer h3{ font-size:18px; font-weight:500; margin:0 0 4px; }
+  .drawer .drawer-sub{ font-size:12.5px; color:rgba(36,49,42,0.55); margin:0 0 16px; }
+  .drawer label{ display:block; font-size:12.5px; color: rgba(36,49,42,0.6); margin: 16px 0 8px; }
+  .swatches{ display:flex; gap:8px; flex-wrap:wrap; }
+  .swatch{ width:30px;height:30px;border-radius:50%; border:2px solid transparent; cursor:pointer; }
+  .swatch.active{ border-color: var(--ink); }
+  .drawer input[type=color]{ width:100%; height:38px; border:1px solid var(--line); border-radius:8px; background:none; padding:2px; }
+  .drawer-close{ position:absolute; top:18px; right:18px; background:none;border:none;font-size:20px;color:var(--ink); }
+  .reset-btn, .logout-btn{ margin-top:12px; width:100%; padding:10px; border:1px solid rgba(162,78,92,0.4); color:var(--berry); background:none; border-radius:8px; font-size:13px; }
+
+  footer{ text-align:center; font-size:12px; color: rgba(36,49,42,0.4); padding: 30px 20px 10px; }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div id="gate" class="gate"></div>
+
+<div id="appMain" class="hidden">
+<header class="top">
+  <div class="title"><h1>Habit House</h1><p>a shared habit garden — plant something daily</p></div>
+  <div class="head-btns"><button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙︎</button></div>
+</header>
+
+<main>
+  <div class="status-bar">
+    <div class="left"><span class="dot" id="syncDot"></span><span id="syncText">Local only on this device</span></div>
+    <span id="whoText"></span>
+  </div>
+
+  <section class="garden-panel">
+    <div class="garden-row" id="gardenRow"></div>
+    <div class="ground-line"></div>
+    <p class="garden-caption" id="gardenCaption"></p>
+  </section>
+
+  <section class="activity">
+    <h3>Happening now</h3>
+    <ul id="activityList"></ul>
+  </section>
+
+  <div class="rows">
+    <div class="person-card" id="card1">
+      <span class="you-badge hidden" id="youBadge1">YOU</span>
+      <div class="person-head"><h2 id="head1">You</h2><span class="streak-pill" id="pill1">0 day streak</span></div>
+      <p class="person-sub" id="uname1"></p>
+      <ul class="habit-list" id="list1"></ul>
+      <div class="add-habit"><input type="text" id="newHabit1" placeholder="Add a habit…" maxlength="30"><button onclick="addHabit(1)">Add</button></div>
+    </div>
+    <div class="person-card" id="card2">
+      <span class="you-badge hidden" id="youBadge2">YOU</span>
+      <div class="person-head"><h2 id="head2">Partner</h2><span class="streak-pill" id="pill2">0 day streak</span></div>
+      <p class="person-sub" id="uname2"></p>
+      <ul class="habit-list" id="list2"></ul>
+      <div class="add-habit"><input type="text" id="newHabit2" placeholder="Add a habit…" maxlength="30"><button onclick="addHabit(2)">Add</button></div>
+    </div>
+  </div>
+
+  <section class="reminders">
+    <h2>Reminders</h2>
+    <p class="sub">A day, a time, a nudge — like "Monday · 2:00 PM · Workout."</p>
+    <ul class="rem-list" id="remList"></ul>
+    <div class="rem-form">
+      <select id="remDay"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select>
+      <input type="time" id="remTime" value="18:00">
+      <select id="remWho"><option value="1">You</option><option value="2">Partner</option><option value="both">Both</option></select>
+      <input type="text" id="remLabel" placeholder="What's the reminder for? e.g. Workout" maxlength="40">
+      <button onclick="addReminder()">Add reminder</button>
+    </div>
+    <button class="notif-btn" id="notifBtn" onclick="requestNotifPermission()">Turn on notifications for this device</button>
+    <p class="rem-note">Reminders fire while this site is open in your browser. A buzz with the app fully closed needs push notifications set up on the backend — a further step I can add.</p>
+  </section>
+
+  <section class="journal">
+    <h2>Notes to each other</h2>
+    <p class="sub">A shared log — encouragement, check-ins, whatever you want to say.</p>
+    <div class="prompt-box"><span id="promptText">What's one thing you're proud of this week?</span><button onclick="newPrompt()">Shuffle</button></div>
+    <div class="entries" id="entries"></div>
+    <div class="entry-form">
+      <input type="text" id="entryText" placeholder="Write something…" maxlength="220">
+      <button onclick="addEntry()">Send</button>
+    </div>
+    <p class="journal-note">Everyone signed into this household sees this log update live.</p>
+  </section>
+</main>
+
+<footer>Habit House · your data lives in your own Railway project, not on our servers</footer>
+</div>
+
+<div class="drawer-backdrop" id="backdrop"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" id="drawerClose">✕</button>
+  <h3>Settings</h3>
+  <p class="drawer-sub">Signed in as <span id="drawerWho"></span></p>
+  <label>Accent color</label>
+  <div class="swatches" id="swatches"></div>
+  <label>Custom color</label>
+  <input type="color" id="customColor">
+  <button class="logout-btn" id="logoutBtn">Log out of this device</button>
+  <button class="reset-btn" id="resetBtn">Reset all data for this household</button>
+</div>
+
+<script>
+/* ================= backend (Railway: Express + WebSocket + Postgres) ================= */
+// Sync is same-origin, so there's nothing to configure here — it just works
+// once this app is deployed on Railway (see README). Locally, if no server
+// is running, it degrades gracefully to local-only, same as before.
+let wsEnabled = true;
+let socket = null;
+let wsRetryDelay = 1000;
+
+/* ================= state ================= */
+const LOCAL_KEY = 'habit-house-state-v3';
+const HOUSEHOLD_KEY = 'habit-house-household';
+const AUTH_KEY = 'habit-house-auth-v1';
+
+const defaultState = () => ({
+  names: { 1: 'You', 2: 'Partner' },
+  profiles: { 1: null, 2: null }, // { name, username, pin }
+  accent: '#A24E5C',
+  habits: {
+    1: [
+      { id: cryptoId(), name:'Workout', streak:0, done:false, lastDone:null },
+      { id: cryptoId(), name:'Eat healthy', streak:0, done:false, lastDone:null },
+      { id: cryptoId(), name:'Read Bible', streak:0, done:false, lastDone:null },
+      { id: cryptoId(), name:'Read a book', streak:0, done:false, lastDone:null },
+    ],
+    2: [
+      { id: cryptoId(), name:'Workout', streak:0, done:false, lastDone:null },
+      { id: cryptoId(), name:'Eat healthy', streak:0, done:false, lastDone:null },
+      { id: cryptoId(), name:'Learn something new', streak:0, done:false, lastDone:null },
+    ]
+  },
+  entries: [],
+  reminders: [ { id: cryptoId(), day:1, time:'14:00', who:'both', label:'Workout' } ],
+  activity: [],
+  gardenPoints: 0,
+  lastVisit: todayStr()
+});
+
+function cryptoId(){ return Math.random().toString(36).slice(2,10); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+let householdId = localStorage.getItem(HOUSEHOLD_KEY) || '';
+let state = loadLocal();
+let authInfo = loadAuth();
+let remoteLoaded = false;
+let suppressWrite = false;
+
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LOCAL_KEY);
+    const parsed = raw ? JSON.parse(raw) : defaultState();
+    return rollDay(parsed);
+  }catch(e){ return defaultState(); }
+}
+function rollDay(parsed){
+  if(!parsed.profiles) parsed.profiles = { 1:null, 2:null };
+  if(!parsed.reminders) parsed.reminders = defaultState().reminders;
+  if(!parsed.activity) parsed.activity = [];
+  if(parsed.lastVisit !== todayStr()){
+    [1,2].forEach(p=>{
+      (parsed.habits[p]||[]).forEach(h=>{
+        if(h.lastDone && h.lastDone !== todayStr()){
+          const y = new Date(); y.setDate(y.getDate()-1);
+          const yStr = y.toISOString().slice(0,10);
+          if(h.lastDone !== yStr){ h.streak = 0; }
+        }
+        h.done = false;
+      });
+    });
+    parsed.lastVisit = todayStr();
+  }
+  return parsed;
+}
+function saveLocal(){ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }
+
+function loadAuth(){
+  try{
+    const raw = localStorage.getItem(AUTH_KEY);
+    if(!raw) return null;
+    const a = JSON.parse(raw);
+    if(a.household !== householdId) return null;
+    return a;
+  }catch(e){ return null; }
+}
+function saveAuth(a){ authInfo = a; localStorage.setItem(AUTH_KEY, JSON.stringify(a)); }
+function clearAuth(){ authInfo = null; localStorage.removeItem(AUTH_KEY); }
+
+function pushState(){
+  saveLocal();
+  if(wsEnabled && householdId && !suppressWrite && socket && socket.readyState === WebSocket.OPEN){
+    socket.send(JSON.stringify({ type:'state', state }));
+  }
+  renderAll();
+}
+
+/* ================= sync ================= */
+function startSync(){
+  document.getElementById('syncDot').classList.remove('live');
+
+  let settled = false; // becomes true once we've heard from the server once (or given up)
+  const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host +
+                '/ws?household=' + encodeURIComponent(householdId);
+
+  try{
+    socket = new WebSocket(wsUrl);
+  }catch(e){
+    console.warn('WebSocket not available, staying local-only:', e);
+    remoteLoaded = true; renderGate(); if(authInfo) renderAll();
+    return;
+  }
+
+  // If we can't reach the server quickly, don't block the UI forever —
+  // fall back to local-only, same spirit as the old "Firebase not configured" path.
+  const fallbackTimer = setTimeout(()=>{
+    if(!settled){
+      settled = true;
+      remoteLoaded = true;
+      renderGate();
+      if(authInfo) renderAll();
+    }
+  }, 4000);
+
+  socket.addEventListener('open', ()=>{ wsRetryDelay = 1000; });
+
+  socket.addEventListener('message', (ev)=>{
+    let msg;
+    try{ msg = JSON.parse(ev.data); }catch(e){ return; }
+
+    if(msg.type === 'state' && msg.state){
+      suppressWrite = true;
+      state = rollDay(msg.state);
+      saveLocal();
+      suppressWrite = false;
+    } else if(msg.type === 'empty'){
+      // nothing saved on the server yet for this household — seed it
+      socket.send(JSON.stringify({ type:'state', state }));
+    }
+
+    if(!settled){
+      settled = true;
+      clearTimeout(fallbackTimer);
+    }
+    remoteLoaded = true;
+    document.getElementById('syncDot').classList.add('live');
+    document.getElementById('syncText').textContent = 'Syncing as "' + householdId + '"';
+    renderGate();
+    if(authInfo) renderAll();
+  });
+
+  socket.addEventListener('close', ()=>{
+    document.getElementById('syncDot').classList.remove('live');
+    // retry with backoff, up to ~30s
+    wsRetryDelay = Math.min(wsRetryDelay * 1.6, 30000);
+    setTimeout(()=>{ if(householdId) startSync(); }, wsRetryDelay);
+  });
+
+  socket.addEventListener('error', ()=>{ /* close will fire right after; handled there */ });
+}
+
+/* ================= gate (sign up / log in) ================= */
+function renderGate(){
+  const gate = document.getElementById('gate');
+  const app = document.getElementById('appMain');
+
+  if(!householdId){
+    gate.innerHTML = gateHouseholdForm();
+    gate.classList.remove('hidden'); app.classList.add('hidden');
+    return;
+  }
+  if(!remoteLoaded){
+    gate.innerHTML = `<div class="gate-card"><h1>Connecting…</h1><p class="lede">Reaching your household "${escapeHtml(householdId)}".</p></div>`;
+    gate.classList.remove('hidden'); app.classList.add('hidden');
+    return;
+  }
+  // recheck auth still valid against current state
+  if(authInfo){
+    const prof = state.profiles[authInfo.slot];
+    if(!prof || prof.username.toLowerCase() !== authInfo.username.toLowerCase()){
+      clearAuth();
+    }
+  }
+  if(authInfo){
+    gate.classList.add('hidden'); app.classList.remove('hidden');
+    return;
+  }
+  const emptySlot = !state.profiles[1] ? 1 : (!state.profiles[2] ? 2 : null);
+  gate.classList.remove('hidden'); app.classList.add('hidden');
+  gate.innerHTML = emptySlot ? gateSignupForm(emptySlot) : gateLoginForm();
+  wireGateForm();
+}
+
+function gateHouseholdForm(){
+  return `
+  <div class="gate-card">
+    <h1>Habit House</h1>
+    <p class="lede">Enter your household code. Use the exact same one on both phones.</p>
+    <label>Household code</label>
+    <input type="text" id="gateHousehold" placeholder="e.g. og-and-mimi-2026" autocomplete="off">
+    <button class="primary" id="gateHouseholdBtn">Continue</button>
+    <p class="gate-note">This is just a shared name for your two-person space — pick something only you two would guess.</p>
+  </div>`;
+}
+
+function gateSignupForm(slot){
+  const other = state.profiles[slot===1?2:1];
+  return `
+  <div class="gate-card">
+    <h1>Set up your profile</h1>
+    <p class="lede">${other ? `${escapeHtml(other.name)} (@${escapeHtml(other.username)}) already set up — you're the second sign-up.` : "You're the first to sign up on this household."}</p>
+    <label>Your name</label>
+    <input type="text" id="suName" placeholder="e.g. Osei" maxlength="20" autocomplete="off">
+    <label>Username</label>
+    <input type="text" id="suUsername" placeholder="e.g. osei" maxlength="20" autocomplete="off">
+    <label>4-digit number (your PIN)</label>
+    <input type="text" id="suPin" placeholder="e.g. 4821" inputmode="numeric" maxlength="8" autocomplete="off">
+    <p class="pin-hint">Just a simple lock so a stranger can't open your log — not bank-level security.</p>
+    <button class="primary" id="suBtn">Sign up</button>
+    <div id="gateErr" class="gate-error"></div>
+    <div class="switcher"><button id="toLoginBtn">Already signed up? Log in instead</button></div>
+  </div>`;
+}
+
+function gateLoginForm(){
+  const p1 = state.profiles[1], p2 = state.profiles[2];
+  const opts = [p1,p2].filter(Boolean).map(p=>`<option value="${escapeHtml(p.username)}">${escapeHtml(p.name)} (@${escapeHtml(p.username)})</option>`).join('');
+  return `
+  <div class="gate-card">
+    <h1>Log in</h1>
+    <p class="lede">Both of you are set up on this household. Pick yourself and enter your PIN.</p>
+    <label>You are</label>
+    <select id="liUsername">${opts}</select>
+    <label>Your PIN</label>
+    <input type="text" id="liPin" inputmode="numeric" maxlength="8" autocomplete="off">
+    <button class="primary" id="liBtn">Log in</button>
+    <div id="gateErr" class="gate-error"></div>
+  </div>`;
+}
+
+function wireGateForm(){
+  const hb = document.getElementById('gateHouseholdBtn');
+  if(hb) hb.onclick = ()=>{
+    const code = document.getElementById('gateHousehold').value.trim().toLowerCase().replace(/\s+/g,'-');
+    if(!code) return;
+    householdId = code;
+    localStorage.setItem(HOUSEHOLD_KEY, code);
+    authInfo = loadAuth();
+    remoteLoaded = false;
+    renderGate();
+    startSync();
+  };
+  const su = document.getElementById('suBtn');
+  if(su) su.onclick = ()=>{
+    const name = document.getElementById('suName').value.trim();
+    const username = document.getElementById('suUsername').value.trim();
+    const pin = document.getElementById('suPin').value.trim();
+    const err = document.getElementById('gateErr');
+    if(!name || !username || !pin){ err.textContent = 'Fill in all three fields.'; return; }
+    if(!/^\d{4,8}$/.test(pin)){ err.textContent = 'PIN should be 4-8 digits.'; return; }
+    const other = state.profiles[1] && state.profiles[1].username.toLowerCase()===username.toLowerCase() ? state.profiles[1]
+                : state.profiles[2] && state.profiles[2].username.toLowerCase()===username.toLowerCase() ? state.profiles[2] : null;
+    if(other){ err.textContent = 'That username is taken — pick another.'; return; }
+    const slot = !state.profiles[1] ? 1 : 2;
+    state.profiles[slot] = { name, username, pin };
+    state.names[slot] = name;
+    saveAuth({ household: householdId, slot, username });
+    pushState();
+    renderGate();
+  };
+  const toLogin = document.getElementById('toLoginBtn');
+  if(toLogin) toLogin.onclick = ()=>{
+    const gate = document.getElementById('gate');
+    gate.innerHTML = gateLoginForm();
+    wireGateForm();
+  };
+  const li = document.getElementById('liBtn');
+  if(li) li.onclick = ()=>{
+    const username = document.getElementById('liUsername').value;
+    const pin = document.getElementById('liPin').value.trim();
+    const err = document.getElementById('gateErr');
+    const slot = state.profiles[1] && state.profiles[1].username === username ? 1
+               : state.profiles[2] && state.profiles[2].username === username ? 2 : null;
+    if(!slot || state.profiles[slot].pin !== pin){ err.textContent = 'Username and PIN don\'t match.'; return; }
+    saveAuth({ household: householdId, slot, username });
+    renderGate();
+    renderAll();
+  };
+}
+
+/* ================= render (main app) ================= */
+const PROMPTS = [
+  "What's one thing you're proud of this week?", "What made today good?",
+  "What's a habit you want to build together next?", "Send some encouragement for tomorrow.",
+  "What book or verse stuck with you recently?", "What's one small win you don't want to forget?",
+  "What do you need more support with this week?"
+];
+function newPrompt(){ document.getElementById('promptText').textContent = PROMPTS[Math.floor(Math.random()*PROMPTS.length)]; }
+function applyAccent(){ document.documentElement.style.setProperty('--accent', state.accent); }
+function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function renderNames(){
+  [1,2].forEach(p=>{
+    document.getElementById('head'+p).textContent = state.names[p];
+    const prof = state.profiles[p];
+    document.getElementById('uname'+p).textContent = prof ? '@'+prof.username : 'not signed up yet';
+    const isYou = authInfo && authInfo.slot === p;
+    document.getElementById('card'+p).classList.toggle('is-you', !!isYou);
+    document.getElementById('youBadge'+p).classList.toggle('hidden', !isYou);
+  });
+  if(authInfo){
+    const me = state.profiles[authInfo.slot];
+    document.getElementById('whoText').textContent = me ? ('Signed in as @'+me.username) : '';
+    document.getElementById('drawerWho').textContent = me ? ('@'+me.username+' ('+me.name+')') : '';
+  }
+}
+
+function totalStreak(p){ const h = state.habits[p]; if(!h.length) return 0; return Math.min(...h.map(x=>x.streak)); }
+
+function renderHabits(){
+  [1,2].forEach(p=>{
+    const list = document.getElementById('list'+p);
+    list.innerHTML = '';
+    state.habits[p].forEach(h=>{
+      const li = document.createElement('li');
+      li.className = 'habit-row';
+      li.innerHTML = `
+        <button class="habit-check ${h.done?'done':''}" onclick="toggleHabit(${p}, '${h.id}')">${h.done?'✓':''}</button>
+        <span class="habit-name">${escapeHtml(h.name)}</span>
+        <span class="habit-streak">${h.streak>0?h.streak+'🔥':''}</span>
+        <button class="habit-del" onclick="delHabit(${p}, '${h.id}')" aria-label="Remove">✕</button>`;
+      list.appendChild(li);
+    });
+    document.getElementById('pill'+p).textContent = totalStreak(p) + ' day streak';
+  });
+}
+
+const GARDEN_EMOJI = ['🌰','🌱','🌿','🌸','🌳','✨🌳✨'];
+function renderGarden(){
+  const pts = state.gardenPoints;
+  const stage = Math.min(GARDEN_EMOJI.length-1, Math.floor(pts/6));
+  const row = document.getElementById('gardenRow');
+  row.innerHTML = '';
+  const count = Math.max(1, Math.min(7, Math.floor(pts/3)+1));
+  for(let i=0;i<count;i++){
+    const s = document.createElement('span');
+    s.className = 'garden-stage';
+    const localStage = Math.min(GARDEN_EMOJI.length-1, Math.max(0, stage - (count-1-i)%2));
+    s.textContent = GARDEN_EMOJI[localStage];
+    row.appendChild(s);
+  }
+  document.getElementById('gardenCaption').innerHTML = `<b>${pts}</b> check-ins watered this garden. Every completed habit for either of you adds growth.`;
+}
+
+function renderEntries(){
+  const wrap = document.getElementById('entries');
+  wrap.innerHTML = '';
+  if(state.entries.length === 0){ wrap.innerHTML = '<p style="font-size:13px;color:rgba(36,49,42,0.5)">No notes yet — say something nice.</p>'; return; }
+  state.entries.slice().reverse().forEach(e=>{
+    const div = document.createElement('div');
+    div.className = 'entry from-'+e.from;
+    div.innerHTML = `<div class="meta">${escapeHtml(state.names[e.from]||'Someone')} · ${e.date}</div><div class="text">${escapeHtml(e.text)}</div>`;
+    wrap.appendChild(div);
+  });
+}
+
+function renderActivity(){
+  const wrap = document.getElementById('activityList');
+  wrap.innerHTML = '';
+  const items = (state.activity||[]).slice(-8).reverse();
+  if(items.length === 0){ wrap.innerHTML = '<li class="empty">Nothing yet today — check off a habit to get things growing.</li>'; return; }
+  items.forEach(a=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${escapeHtml(a.text)}</span><span class="when">${a.time}</span>`;
+    wrap.appendChild(li);
+  });
+}
+
+const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function renderReminders(){
+  const wrap = document.getElementById('remList');
+  wrap.innerHTML = '';
+  if(state.reminders.length === 0){ wrap.innerHTML = '<li class="empty" style="font-size:13px;color:rgba(36,49,42,0.45)">No reminders set.</li>'; return; }
+  state.reminders.slice().sort((a,b)=> a.day-b.day || a.time.localeCompare(b.time)).forEach(r=>{
+    const li = document.createElement('li');
+    li.className = 'rem-row';
+    const who = r.who === 'both' ? 'Both' : state.names[r.who];
+    li.innerHTML = `<span class="tag">${WEEKDAYS[r.day]} · ${to12h(r.time)}</span><span class="label">${escapeHtml(r.label)} — ${escapeHtml(who)}</span><button class="rem-del" onclick="delReminder('${r.id}')">✕</button>`;
+    wrap.appendChild(li);
+  });
+}
+function to12h(t){ const [h,m] = t.split(':').map(Number); const ampm = h>=12?'PM':'AM'; const hh = ((h+11)%12)+1; return `${hh}:${String(m).padStart(2,'0')} ${ampm}`; }
+
+function renderAll(){
+  if(!authInfo) return;
+  applyAccent(); renderNames(); renderHabits(); renderGarden();
+  renderEntries(); renderActivity(); renderReminders(); syncSwatchActive();
+}
+
+/* ================= actions ================= */
+function logActivity(text){
+  state.activity = state.activity || [];
+  state.activity.push({ text, time: new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}) });
+  if(state.activity.length > 40) state.activity = state.activity.slice(-40);
+}
+
+function toggleHabit(p, id){
+  const h = state.habits[p].find(x=>x.id===id);
+  if(!h) return;
+  if(!h.done){
+    h.done = true; h.streak += 1; h.lastDone = todayStr();
+    state.gardenPoints += 1;
+    logActivity(`${state.names[p]} completed "${h.name}"`);
+  } else {
+    h.done = false; h.streak = Math.max(0, h.streak-1);
+    state.gardenPoints = Math.max(0, state.gardenPoints-1);
+  }
+  pushState();
+}
+function addHabit(p){
+  const input = document.getElementById('newHabit'+p);
+  const name = input.value.trim();
+  if(!name) return;
+  state.habits[p].push({ id: cryptoId(), name, streak:0, done:false, lastDone:null });
+  input.value = '';
+  pushState();
+}
+function delHabit(p, id){ state.habits[p] = state.habits[p].filter(x=>x.id!==id); pushState(); }
+
+function addEntry(){
+  const text = document.getElementById('entryText').value.trim();
+  if(!text || !authInfo) return;
+  state.entries.push({ from: authInfo.slot, text, date: new Date().toLocaleDateString(undefined,{month:'short', day:'numeric'}) });
+  logActivity(`${state.names[authInfo.slot]} left a note`);
+  document.getElementById('entryText').value = '';
+  pushState();
+}
+
+function addReminder(){
+  const day = parseInt(document.getElementById('remDay').value,10);
+  const time = document.getElementById('remTime').value || '18:00';
+  const who = document.getElementById('remWho').value;
+  const label = document.getElementById('remLabel').value.trim();
+  if(!label) return;
+  state.reminders.push({ id: cryptoId(), day, time, who, label });
+  document.getElementById('remLabel').value = '';
+  pushState();
+}
+function delReminder(id){ state.reminders = state.reminders.filter(r=>r.id!==id); pushState(); }
+
+document.getElementById('entryText').addEventListener('keydown', e=>{ if(e.key==='Enter') addEntry(); });
+['newHabit1','newHabit2'].forEach((id,i)=>{ document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') addHabit(i+1); }); });
+document.getElementById('remLabel').addEventListener('keydown', e=>{ if(e.key==='Enter') addReminder(); });
+
+/* ================= reminders / notifications ================= */
+function requestNotifPermission(){
+  if(!('Notification' in window)){ alert('This browser does not support notifications.'); return; }
+  Notification.requestPermission().then(perm=>{
+    document.getElementById('notifBtn').textContent = perm === 'granted' ? 'Notifications on for this device' : 'Notifications blocked — enable in browser settings';
+  });
+}
+const firedToday = new Set();
+function checkReminders(){
+  if(!authInfo || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = new Date();
+  const day = now.getDay();
+  const nowStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  (state.reminders||[]).forEach(r=>{
+    if(r.day !== day || r.time !== nowStr) return;
+    const key = r.id + '-' + todayStr();
+    if(firedToday.has(key)) return;
+    firedToday.add(key);
+    const who = r.who==='both' ? '' : ` (${state.names[r.who]})`;
+    new Notification('Habit House reminder', { body: r.label + who });
+  });
+}
+setInterval(checkReminders, 20000);
+
+/* ================= settings drawer ================= */
+const ACCENTS = ['#A24E5C','#3C5844','#C99A3E','#4A6FA5','#7A5C9E','#B3623E'];
+function buildSwatches(){
+  const wrap = document.getElementById('swatches');
+  wrap.innerHTML = '';
+  ACCENTS.forEach(c=>{
+    const s = document.createElement('div');
+    s.className = 'swatch'; s.style.background = c; s.dataset.color = c;
+    s.onclick = ()=>{ state.accent = c; pushState(); };
+    wrap.appendChild(s);
+  });
+}
+function syncSwatchActive(){
+  document.querySelectorAll('.swatch').forEach(s=>{ s.classList.toggle('active', s.dataset.color.toLowerCase() === state.accent.toLowerCase()); });
+  document.getElementById('customColor').value = state.accent;
+}
+document.getElementById('customColor').addEventListener('input', e=>{ state.accent = e.target.value; pushState(); });
+
+const drawer = document.getElementById('drawer');
+const backdrop = document.getElementById('backdrop');
+function openDrawer(){ drawer.classList.add('open'); backdrop.classList.add('open'); }
+function closeDrawer(){ drawer.classList.remove('open'); backdrop.classList.remove('open'); }
+document.getElementById('settingsBtn').onclick = openDrawer;
+document.getElementById('drawerClose').onclick = closeDrawer;
+backdrop.onclick = closeDrawer;
+document.getElementById('logoutBtn').onclick = ()=>{ clearAuth(); closeDrawer(); renderGate(); };
+document.getElementById('resetBtn').onclick = ()=>{
+  if(confirm('Reset everything for this household? Both of you will need to sign up again.')){
+    state = defaultState();
+    clearAuth();
+    pushState();
+    closeDrawer();
+    renderGate();
+  }
+};
+
+/* ================= init ================= */
+buildSwatches();
+newPrompt();
+renderGate();
+if(householdId) startSync();
+</script>
+</body>
+</html>
