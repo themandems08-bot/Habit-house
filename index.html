@@ -208,6 +208,8 @@
   .drawer-close{ position:absolute; top:18px; right:18px; background:none;border:none;font-size:20px;color:var(--ink); }
   .switch-btn{ margin-top:12px; width:100%; padding:10px; border:1px solid var(--line); color:var(--ink); background:none; border-radius:8px; font-size:13px; }
   .reset-btn, .logout-btn{ margin-top:12px; width:100%; padding:10px; border:1px solid rgba(162,78,92,0.4); color:var(--berry); background:none; border-radius:8px; font-size:13px; }
+  .reset-btn{ background:#B3352F; border-color:#B3352F; color:#fff; font-weight:600; }
+  .reset-btn:hover{ background:#96271F; border-color:#96271F; }
 
   footer{ text-align:center; font-size:12px; color: rgba(36,49,42,0.4); padding: 30px 20px 10px; }
   .hidden{ display:none !important; }
@@ -360,9 +362,13 @@
   <input type="text" id="pinConfirm" placeholder="Confirm new PIN" inputmode="numeric" maxlength="8" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" style="margin-top:8px;">
   <button class="switch-btn" id="pinSaveBtn" style="border-color:var(--accent); color:var(--accent);">Save new PIN</button>
   <div id="pinMsg" class="gate-error" style="margin-top:6px;"></div>
+  <label>Change your username</label>
+  <input type="text" id="unameNew" placeholder="New username" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <button class="switch-btn" id="unameSaveBtn" style="border-color:var(--accent); color:var(--accent);">Save new username</button>
+  <div id="unameMsg" class="gate-error" style="margin-top:6px;"></div>
   <button class="switch-btn" id="switchHouseholdBtn">Switch household code</button>
   <button class="logout-btn" id="logoutBtn">Log out of this device</button>
-  <button class="reset-btn" id="resetBtn">Reset all data for this household</button>
+  <button class="reset-btn" id="resetBtn">Delete all data for this household</button>
 </div>
 
 <script>
@@ -647,7 +653,39 @@ function gateLoginForm(){
     <input type="text" id="liPin" inputmode="numeric" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore>
     <button class="primary" id="liBtn">Log in</button>
     <div id="gateErr" class="gate-error"></div>
+    <div class="switcher"><button id="forgotBtn">Forgot your PIN, or need to change a username?</button></div>
     <div class="switcher"><button id="switchCodeLink">Wrong household code? Switch it</button></div>
+  </div>`;
+}
+
+let editSlot = null;
+function gateForgotForm(){
+  const profs = [1,2].map(s=> state.profiles[s] ? { slot:s, ...state.profiles[s] } : null).filter(Boolean);
+  const btns = profs.map(p=>`<button class="switch-btn" id="forgotSlot${p.slot}">${escapeHtml(p.name)} (@${escapeHtml(p.username)})</button>`).join('');
+  return `
+  <div class="gate-card">
+    <h1>Fix a profile</h1>
+    <p class="lede">Pick which of you this is. Since you already know the household code, you don't need the old PIN — you're about to replace it.</p>
+    ${btns}
+    <div class="switcher"><button id="backToLoginBtn">Back to log in</button></div>
+  </div>`;
+}
+
+function gateEditProfileForm(slot){
+  const prof = state.profiles[slot];
+  return `
+  <div class="gate-card">
+    <h1>Reset ${escapeHtml(prof.name)}'s profile</h1>
+    <p class="lede">Set a new name, username, and PIN — this replaces the old ones on this profile.</p>
+    <label>Name</label>
+    <input type="text" id="epName" maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false" value="${escapeHtml(prof.name)}">
+    <label>Username</label>
+    <input type="text" id="epUsername" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${escapeHtml(prof.username)}">
+    <label>New 4-8 digit PIN</label>
+    <input type="text" id="epPin" inputmode="numeric" maxlength="8" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 4821" data-lpignore="true" data-1p-ignore>
+    <button class="primary" id="epSaveBtn">Save &amp; log in</button>
+    <div id="gateErr" class="gate-error"></div>
+    <div class="switcher"><button id="backToLoginBtn2">Cancel</button></div>
   </div>`;
 }
 
@@ -704,6 +742,41 @@ function wireGateForm(){
     if(confirm('Switch to a different household code?')){
       switchHousehold();
     }
+  };
+  const forgot = document.getElementById('forgotBtn');
+  if(forgot) forgot.onclick = ()=>{
+    const gate = document.getElementById('gate');
+    gate.innerHTML = gateForgotForm();
+    wireGateForm();
+  };
+  [1,2].forEach(s=>{
+    const b = document.getElementById('forgotSlot'+s);
+    if(b) b.onclick = ()=>{
+      editSlot = s;
+      const gate = document.getElementById('gate');
+      gate.innerHTML = gateEditProfileForm(s);
+      wireGateForm();
+    };
+  });
+  const back1 = document.getElementById('backToLoginBtn');
+  if(back1) back1.onclick = ()=>{ const gate = document.getElementById('gate'); gate.innerHTML = gateLoginForm(); wireGateForm(); };
+  const back2 = document.getElementById('backToLoginBtn2');
+  if(back2) back2.onclick = ()=>{ const gate = document.getElementById('gate'); gate.innerHTML = gateLoginForm(); wireGateForm(); };
+  const epSave = document.getElementById('epSaveBtn');
+  if(epSave) epSave.onclick = ()=>{
+    const err = document.getElementById('gateErr');
+    const name = document.getElementById('epName').value.trim();
+    const username = document.getElementById('epUsername').value.trim();
+    const pin = document.getElementById('epPin').value.trim();
+    if(!name || !username || !pin){ err.textContent = 'Fill in all three fields.'; return; }
+    if(!/^\d{4,8}$/.test(pin)){ err.textContent = 'PIN should be 4-8 digits.'; return; }
+    const other = state.profiles[editSlot===1?2:1];
+    if(other && other.username.toLowerCase() === username.toLowerCase()){ err.textContent = 'That username is taken — pick another.'; return; }
+    state.profiles[editSlot] = { name, username, pin };
+    state.names[editSlot] = name;
+    saveAuth({ household: householdId, slot: editSlot, username });
+    pushState();
+    renderGate();
   };
 }
 
@@ -1037,7 +1110,9 @@ function openDrawer(){
   drawer.classList.add('open'); backdrop.classList.add('open');
   document.getElementById('pinMsg').textContent = '';
   document.getElementById('pinMsg').classList.remove('ok');
-  ['pinCurrent','pinNew','pinConfirm'].forEach(id=>{ document.getElementById(id).value=''; });
+  document.getElementById('unameMsg').textContent = '';
+  document.getElementById('unameMsg').classList.remove('ok');
+  ['pinCurrent','pinNew','pinConfirm','unameNew'].forEach(id=>{ document.getElementById(id).value=''; });
 }
 function closeDrawer(){ drawer.classList.remove('open'); backdrop.classList.remove('open'); }
 document.getElementById('settingsBtn').onclick = openDrawer;
@@ -1070,6 +1145,23 @@ document.getElementById('pinSaveBtn').onclick = ()=>{
   document.getElementById('pinNew').value = '';
   document.getElementById('pinConfirm').value = '';
   msg.textContent = 'PIN updated.';
+  msg.classList.add('ok');
+};
+
+document.getElementById('unameSaveBtn').onclick = ()=>{
+  const msg = document.getElementById('unameMsg');
+  msg.classList.remove('ok');
+  if(!authInfo){ msg.textContent = 'Not signed in.'; return; }
+  const prof = state.profiles[authInfo.slot];
+  const newUsername = document.getElementById('unameNew').value.trim();
+  if(!newUsername){ msg.textContent = 'Enter a new username.'; return; }
+  const other = state.profiles[authInfo.slot===1?2:1];
+  if(other && other.username.toLowerCase() === newUsername.toLowerCase()){ msg.textContent = 'That username is taken — pick another.'; return; }
+  prof.username = newUsername;
+  saveAuth({ household: householdId, slot: authInfo.slot, username: newUsername }); // keep this device signed in under the new name
+  pushState();
+  document.getElementById('unameNew').value = '';
+  msg.textContent = 'Username updated.';
   msg.classList.add('ok');
 };
 
