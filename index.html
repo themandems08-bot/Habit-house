@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Habit House — a habit garden for two</title>
 <meta name="description" content="A shared habit tracker for couples: workouts, reading, learning, and a garden that grows with you.">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#3C5844">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Habit House">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,9 +20,10 @@
     --moss:#3C5844; --moss-dark:#26392C; --berry:#A24E5C; --gold:#C99A3E;
     --line: rgba(36,49,42,0.14); --accent: var(--berry); --radius: 14px;
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
-  body{ background:var(--parchment); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased; padding-bottom:60px; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{ background:var(--parchment); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
   h1,h2,h3,.serif{ font-family:'Fraunces', serif; }
   a{color:inherit;}
   button{ font-family:inherit; cursor:pointer; }
@@ -38,7 +42,7 @@
   .gate-card label{ display:block; font-size:12.5px; color: rgba(36,49,42,0.6); margin: 14px 0 6px; }
   .gate-card input, .gate-card select{
     width:100%; border:1px solid var(--line); border-radius:8px; padding:10px 12px;
-    font-size:15px; font-family:inherit; background:transparent; color:var(--ink);
+    font-size:16px; font-family:inherit; background:transparent; color:var(--ink);
   }
   .gate-card input:focus, .gate-card select:focus{ outline:none; border-color:var(--accent); }
   .gate-card button.primary{
@@ -52,7 +56,7 @@
   .pin-hint{ font-size:11.5px; color: rgba(36,49,42,0.45); margin-top:4px; }
   .who-existing{ font-size:12.5px; color: rgba(36,49,42,0.6); margin: 4px 0 0; }
 
-  header.top{ padding: 28px 20px 18px; max-width: 880px; margin: 0 auto; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+  header.top{ padding: calc(28px + env(safe-area-inset-top)) 20px 18px; max-width: 880px; margin: 0 auto; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
   header.top .title h1{ font-size: clamp(28px, 5vw, 38px); font-weight:500; margin:0 0 2px; letter-spacing:-0.01em; }
   header.top .title p{ margin:0; color: rgba(36,49,42,0.62); font-size:14.5px; }
   .head-btns{ display:flex; gap:8px; flex-shrink:0; }
@@ -101,7 +105,7 @@
   .habit-del{ background:none; border:none; color: rgba(36,49,42,0.28); font-size:15px; padding:0 2px; line-height:1; }
   .habit-del:hover{ color: var(--berry); }
   .add-habit{ display:flex; gap:8px; margin-top:12px; }
-  .add-habit input{ flex:1; border:1px solid var(--line); background:transparent; border-radius:8px; padding:7px 10px; font-size:13.5px; color:var(--ink); font-family:inherit; }
+  .add-habit input{ flex:1; border:1px solid var(--line); background:transparent; border-radius:8px; padding:7px 10px; font-size:16px; color:var(--ink); font-family:inherit; }
   .add-habit input:focus{ outline:none; border-color:var(--accent); }
   .add-habit button{ border:1px solid var(--line); background:transparent; border-radius:8px; padding:7px 12px; font-size:13px; color:var(--ink); }
   .add-habit button:hover{ border-color: var(--accent); }
@@ -117,7 +121,7 @@
   .entry .meta{ font-size:11.5px; color: rgba(36,49,42,0.5); margin-bottom:2px; }
   .entry .text{ font-size:14px; }
   .entry-form{ display:flex; gap:8px; }
-  .entry-form input{ flex:1; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13.5px; font-family:inherit; }
+  .entry-form input{ flex:1; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:16px; font-family:inherit; }
   .entry-form input:focus{ outline:none; border-color:var(--accent); }
   .entry-form button{ background: var(--moss); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:500; }
 
@@ -133,12 +137,61 @@
   .rem-del:hover{ color: var(--berry); }
   .rem-form{ display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:8px; margin-bottom:8px; }
   @media (max-width:560px){ .rem-form{ grid-template-columns: 1fr 1fr; } }
-  .rem-form select, .rem-form input{ border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:13px; font-family:inherit; background:transparent; }
+  .rem-form select, .rem-form input{ border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:16px; font-family:inherit; background:transparent; }
   .rem-form input[type=text]{ grid-column: 1 / -1; }
   .rem-form button{ background: var(--moss); color:#fff; border:none; border-radius:8px; padding:8px 12px; font-size:13px; grid-column: 1 / -1; }
   .notif-btn{ font-size:12.5px; color: var(--berry); background:none; border:none; text-decoration:underline; padding:0; }
 
   .journal-note, .rem-note{ font-size:12px; color: rgba(36,49,42,0.45); margin-top:6px; line-height:1.5; }
+
+  /* ---------- calendar ---------- */
+  section.calendar{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 20px; }
+  section.calendar h2{ font-size:19px; font-weight:500; margin:0 0 4px; }
+  section.calendar .sub{ font-size:13px; color: rgba(36,49,42,0.55); margin:0 0 14px; }
+  .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .cal-nav button{ background:none; border:1px solid var(--line); border-radius:8px; width:32px; height:32px; font-size:15px; }
+  .cal-nav button:hover{ border-color:var(--accent); }
+  .cal-nav .cal-title{ font-weight:600; font-size:15px; }
+  .cal-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color: rgba(36,49,42,0.55); margin-bottom:10px; }
+  .cal-legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .cal-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .cal-dot.full{ background:#4C8B5F; } .cal-dot.partial{ background:var(--gold); } .cal-dot.missed{ background: rgba(162,78,92,0.55); }
+  .cal-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; }
+  .cal-wd{ text-align:center; font-size:10.5px; color: rgba(36,49,42,0.45); font-weight:600; padding-bottom:4px; }
+  .cal-day{ position:relative; aspect-ratio:1; border:1px solid var(--line); border-radius:8px; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:12.5px; color:var(--ink); gap:2px; padding:2px; }
+  .cal-day:disabled{ opacity:0.25; border-color:transparent; }
+  .cal-day.today{ border-color: var(--accent); border-width:2px; font-weight:700; }
+  .cal-day.selected{ background: rgba(60,88,68,0.14); }
+  .cal-day .cal-dots{ display:flex; gap:3px; }
+  .cal-day .cal-evt{ position:absolute; bottom:3px; right:3px; width:5px; height:5px; border-radius:50%; background:var(--berry); }
+  @media (max-width:400px){ .cal-day{ font-size:11px; } }
+  .cal-panel{ margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  .cal-panel h4{ margin:0 0 8px; font-size:14px; font-weight:600; }
+  .cal-evt-list{ list-style:none; margin:0 0 10px; padding:0; }
+  .cal-evt-row{ display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+  .cal-evt-row:last-child{ border-bottom:none; }
+  .cal-evt-row .tag{ background: rgba(60,88,68,0.12); border-radius:6px; padding:2px 7px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  .cal-evt-row .label{ flex:1; }
+  .cal-evt-row .by{ font-size:11px; color: rgba(36,49,42,0.45); }
+  .cal-evt-del{ background:none;border:none;color: rgba(36,49,42,0.28); font-size:15px; }
+  .cal-evt-del:hover{ color:var(--berry); }
+  .cal-evt-empty{ font-size:13px; color: rgba(36,49,42,0.45); margin:0 0 10px; }
+  .cal-evt-form{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .cal-evt-form input[type=text]{ grid-column: 1 / -1; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-family:inherit; background:transparent; color:var(--ink); }
+  .cal-evt-form select{ border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-family:inherit; background:transparent; color:var(--ink); }
+  .cal-evt-form button{ grid-column: 1 / -1; background: var(--moss); color:#fff; border:none; border-radius:8px; padding:9px; font-size:13.5px; font-weight:500; }
+
+  /* ---------- chat ---------- */
+  .chat-thread{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px; max-height:360px; overflow-y:auto; padding:4px 2px; scroll-behavior:smooth; }
+  .msg-row{ display:flex; }
+  .msg-row.mine{ justify-content:flex-end; }
+  .msg-row.theirs{ justify-content:flex-start; }
+  .bubble{ max-width:76%; padding:8px 13px; border-radius:16px; font-size:14.5px; line-height:1.4; position:relative; }
+  .msg-row.mine .bubble{ background: var(--moss); color:#fff; border-bottom-right-radius:4px; }
+  .msg-row.theirs .bubble{ background: rgba(36,49,42,0.08); color:var(--ink); border-bottom-left-radius:4px; }
+  .msg-meta{ font-size:10.5px; margin-top:2px; opacity:0.7; }
+  .msg-row.mine .msg-meta{ text-align:right; }
+  .chat-empty{ font-size:13px; color: rgba(36,49,42,0.45); text-align:center; padding:20px 0; }
 
   .drawer-backdrop{ position:fixed; inset:0; background: rgba(36,49,42,0.35); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:20; }
   .drawer-backdrop.open{ opacity:1; pointer-events:auto; }
@@ -160,16 +213,16 @@
 
   /* ---------- always-on quick menu ---------- */
   .quick-menu-btn{
-    position:fixed; top:16px; right:16px; z-index:60;
+    position:fixed; top: calc(16px + env(safe-area-inset-top)); right: calc(16px + env(safe-area-inset-right)); z-index:60;
     background: var(--card); border:1.5px solid var(--line); width:42px; height:42px;
     border-radius:50%; display:flex; align-items:center; justify-content:center;
     font-size:17px; box-shadow: 0 2px 8px rgba(36,49,42,0.12);
   }
   .quick-menu-btn:hover{ border-color: var(--accent); }
   .quick-menu{
-    position:fixed; top:64px; right:16px; z-index:60;
+    position:fixed; top: calc(64px + env(safe-area-inset-top)); right: calc(16px + env(safe-area-inset-right)); z-index:60;
     background: var(--card); border:1px solid var(--line); border-radius: var(--radius);
-    padding: 14px; width: 240px; box-shadow: 0 6px 20px rgba(36,49,42,0.18);
+    padding: 14px; width: 240px; max-width: calc(100vw - 32px); box-shadow: 0 6px 20px rgba(36,49,42,0.18);
   }
   .quick-menu .qm-status{ font-size:12px; color: rgba(36,49,42,0.55); margin-bottom:10px; line-height:1.5; }
   .quick-menu .qm-status b{ color:var(--ink); }
@@ -249,16 +302,42 @@
     <p class="rem-note">Reminders fire while this site is open in your browser. A buzz with the app fully closed needs push notifications set up on the backend — a further step I can add.</p>
   </section>
 
+  <section class="calendar">
+    <h2>Calendar</h2>
+    <p class="sub">Habits reset to zero every day at midnight — this is the record of how each day went, plus anything either of you has scheduled.</p>
+    <div class="cal-nav">
+      <button id="calPrev" aria-label="Previous month">‹</button>
+      <span class="cal-title" id="calTitle"></span>
+      <button id="calNext" aria-label="Next month">›</button>
+    </div>
+    <div class="cal-legend">
+      <span><span class="cal-dot full"></span> all habits done</span>
+      <span><span class="cal-dot partial"></span> some done</span>
+      <span><span class="cal-dot missed"></span> missed</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-panel">
+      <h4 id="calPanelTitle">Today</h4>
+      <ul class="cal-evt-list" id="calEvtList"></ul>
+      <div class="cal-evt-form">
+        <select id="calEvtStart"></select>
+        <select id="calEvtEnd"></select>
+        <input type="text" id="calEvtTitle" placeholder="What's happening? e.g. Call, Date night" maxlength="60">
+        <button onclick="addEvent()">Add to calendar</button>
+      </div>
+    </div>
+  </section>
+
   <section class="journal">
-    <h2>Notes to each other</h2>
-    <p class="sub">A shared log — encouragement, check-ins, whatever you want to say.</p>
+    <h2>Messages</h2>
+    <p class="sub">A private thread just between the two of you.</p>
     <div class="prompt-box"><span id="promptText">What's one thing you're proud of this week?</span><button onclick="newPrompt()">Shuffle</button></div>
-    <div class="entries" id="entries"></div>
+    <div class="chat-thread" id="entries"></div>
     <div class="entry-form">
-      <input type="text" id="entryText" placeholder="Write something…" maxlength="220">
+      <input type="text" id="entryText" placeholder="Text something…" maxlength="220">
       <button onclick="addEntry()">Send</button>
     </div>
-    <p class="journal-note">Everyone signed into this household sees this log update live.</p>
+    <p class="journal-note">Just the two of you see this thread — it updates live on both phones.</p>
   </section>
 </main>
 
@@ -313,12 +392,18 @@ const defaultState = () => ({
   entries: [],
   reminders: [ { id: cryptoId(), day:1, time:'14:00', who:'both', label:'Workout' } ],
   activity: [],
+  history: {},   // { "YYYY-MM-DD": { 1:{done,total}, 2:{done,total} } } — for the calendar
+  events: [],    // { id, date:"YYYY-MM-DD", start:0-23, end:1-24, title, addedBy }
   gardenPoints: 0,
   lastVisit: todayStr()
 });
 
 function cryptoId(){ return Math.random().toString(36).slice(2,10); }
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+// Local calendar date (NOT toISOString, which is UTC and would reset habits
+// at UTC midnight instead of the device's actual midnight).
+function dateStr(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
+function todayStr(){ return dateStr(new Date()); }
+function addDays(str, n){ const [y,m,d] = str.split('-').map(Number); const dt = new Date(y, m-1, d); dt.setDate(dt.getDate()+n); return dateStr(dt); }
 
 let householdId = localStorage.getItem(HOUSEHOLD_KEY) || '';
 let state = loadLocal();
@@ -337,12 +422,23 @@ function rollDay(parsed){
   if(!parsed.profiles) parsed.profiles = { 1:null, 2:null };
   if(!parsed.reminders) parsed.reminders = defaultState().reminders;
   if(!parsed.activity) parsed.activity = [];
+  if(!parsed.history) parsed.history = {};
+  if(!parsed.events) parsed.events = [];
   if(parsed.lastVisit !== todayStr()){
+    // Snapshot yesterday's (or however many days were missed's) completion
+    // into history *before* wiping the checkmarks, so the calendar has a
+    // permanent record of what happened on each day.
+    if(parsed.lastVisit){
+      parsed.history[parsed.lastVisit] = parsed.history[parsed.lastVisit] || {};
+      [1,2].forEach(p=>{
+        const list = parsed.habits[p] || [];
+        parsed.history[parsed.lastVisit][p] = { done: list.filter(h=>h.done).length, total: list.length };
+      });
+    }
     [1,2].forEach(p=>{
       (parsed.habits[p]||[]).forEach(h=>{
         if(h.lastDone && h.lastDone !== todayStr()){
-          const y = new Date(); y.setDate(y.getDate()-1);
-          const yStr = y.toISOString().slice(0,10);
+          const yStr = addDays(todayStr(), -1);
           if(h.lastDone !== yStr){ h.streak = 0; }
         }
         h.done = false;
@@ -671,13 +767,16 @@ function renderGarden(){
 function renderEntries(){
   const wrap = document.getElementById('entries');
   wrap.innerHTML = '';
-  if(state.entries.length === 0){ wrap.innerHTML = '<p style="font-size:13px;color:rgba(36,49,42,0.5)">No notes yet — say something nice.</p>'; return; }
-  state.entries.slice().reverse().forEach(e=>{
-    const div = document.createElement('div');
-    div.className = 'entry from-'+e.from;
-    div.innerHTML = `<div class="meta">${escapeHtml(state.names[e.from]||'Someone')} · ${e.date}</div><div class="text">${escapeHtml(e.text)}</div>`;
-    wrap.appendChild(div);
+  if(state.entries.length === 0){ wrap.innerHTML = '<div class="chat-empty">No messages yet — say something nice.</div>'; return; }
+  const myLast = authInfo ? authInfo.slot : null;
+  state.entries.forEach(e=>{
+    const mine = e.from === myLast;
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (mine ? 'mine' : 'theirs');
+    row.innerHTML = `<div><div class="bubble">${escapeHtml(e.text)}</div><div class="msg-meta">${mine?'':escapeHtml(state.names[e.from]||'Them')+' · '}${e.date}</div></div>`;
+    wrap.appendChild(row);
   });
+  wrap.scrollTop = wrap.scrollHeight;
 }
 
 function renderActivity(){
@@ -707,10 +806,111 @@ function renderReminders(){
 }
 function to12h(t){ const [h,m] = t.split(':').map(Number); const ampm = h>=12?'PM':'AM'; const hh = ((h+11)%12)+1; return `${hh}:${String(m).padStart(2,'0')} ${ampm}`; }
 
+/* ================= calendar ================= */
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const now0 = new Date();
+let calYear = now0.getFullYear();
+let calMonth = now0.getMonth(); // 0-11
+let selectedDate = todayStr();
+
+function hourLabel(h){ const ampm = h>=12 && h<24 ? 'PM' : 'AM'; const hh = ((h+11)%12)+1; return `${hh}:00 ${ampm}`; }
+function populateEventHourSelects(){
+  const startSel = document.getElementById('calEvtStart');
+  const endSel = document.getElementById('calEvtEnd');
+  startSel.innerHTML = ''; endSel.innerHTML = '';
+  for(let h=0; h<24; h++){
+    const o = document.createElement('option'); o.value = h; o.textContent = hourLabel(h);
+    startSel.appendChild(o);
+  }
+  for(let h=1; h<=24; h++){
+    const o = document.createElement('option'); o.value = h; o.textContent = h===24 ? '12:00 AM (next day)' : hourLabel(h);
+    endSel.appendChild(o);
+  }
+  startSel.value = 9; endSel.value = 10;
+}
+
+function dayStatus(dateStrVal){
+  const h = state.history && state.history[dateStrVal];
+  if(!h) return null;
+  const totals = [1,2].map(p=> h[p] || {done:0,total:0}).filter(x=>x.total>0);
+  if(totals.length===0) return null;
+  const allFull = totals.every(x=>x.done>=x.total);
+  const anyDone = totals.some(x=>x.done>0);
+  if(allFull) return 'full';
+  if(anyDone) return 'partial';
+  return 'missed';
+}
+
+function renderCalendar(){
+  document.getElementById('calTitle').textContent = `${MONTHS[calMonth]} ${calYear}`;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  WEEKDAYS.forEach(wd=>{ const el = document.createElement('div'); el.className='cal-wd'; el.textContent = wd; grid.appendChild(el); });
+
+  const firstOfMonth = new Date(calYear, calMonth, 1);
+  const startOffset = firstOfMonth.getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const today = todayStr();
+
+  for(let i=0;i<startOffset;i++){ const b=document.createElement('button'); b.className='cal-day'; b.disabled=true; grid.appendChild(b); }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const btn = document.createElement('button');
+    btn.className = 'cal-day';
+    if(ds===today) btn.classList.add('today');
+    if(ds===selectedDate) btn.classList.add('selected');
+    const status = dayStatus(ds);
+    const hasEvents = (state.events||[]).some(e=>e.date===ds);
+    btn.innerHTML = `<span>${d}</span>` + (status ? `<span class="cal-dots"><span class="cal-dot ${status}"></span></span>` : '') + (hasEvents ? '<span class="cal-evt"></span>' : '');
+    btn.onclick = ()=>{ selectedDate = ds; renderCalendar(); renderCalPanel(); };
+    grid.appendChild(btn);
+  }
+}
+
+function renderCalPanel(){
+  const isToday = selectedDate === todayStr();
+  const d = new Date(selectedDate + 'T00:00:00');
+  document.getElementById('calPanelTitle').textContent = (isToday?'Today · ':'') + d.toLocaleDateString(undefined,{weekday:'long', month:'short', day:'numeric'});
+  const list = document.getElementById('calEvtList');
+  list.innerHTML = '';
+  const dayEvents = (state.events||[]).filter(e=>e.date===selectedDate).sort((a,b)=>a.start-b.start);
+  if(dayEvents.length===0){
+    list.innerHTML = '<li class="cal-evt-empty" style="list-style:none;">Nothing on the calendar for this day yet.</li>';
+  } else {
+    dayEvents.forEach(e=>{
+      const li = document.createElement('li');
+      li.className = 'cal-evt-row';
+      const by = e.addedBy ? (state.names[e.addedBy]||'') : '';
+      li.innerHTML = `<span class="tag">${hourLabel(e.start)} – ${hourLabel(e.end===24?0:e.end)}</span><span class="label">${escapeHtml(e.title)}</span><span class="by">${escapeHtml(by)}</span><button class="cal-evt-del" onclick="delEvent('${e.id}')">✕</button>`;
+      list.appendChild(li);
+    });
+  }
+}
+
+function addEvent(){
+  const start = parseInt(document.getElementById('calEvtStart').value,10);
+  let end = parseInt(document.getElementById('calEvtEnd').value,10);
+  const title = document.getElementById('calEvtTitle').value.trim();
+  if(!title) return;
+  if(end<=start) end = start+1;
+  state.events = state.events || [];
+  state.events.push({ id: cryptoId(), date: selectedDate, start, end, title, addedBy: authInfo ? authInfo.slot : null });
+  logActivity(`${authInfo?state.names[authInfo.slot]:'Someone'} added "${title}" to the calendar`);
+  document.getElementById('calEvtTitle').value = '';
+  pushState();
+}
+function delEvent(id){ state.events = (state.events||[]).filter(e=>e.id!==id); pushState(); }
+
+document.getElementById('calPrev').onclick = ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); };
+document.getElementById('calNext').onclick = ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); };
+document.getElementById('calEvtTitle').addEventListener('keydown', e=>{ if(e.key==='Enter') addEvent(); });
+
 function renderAll(){
   if(!authInfo) return;
   applyAccent(); renderNames(); renderHabits(); renderGarden();
   renderEntries(); renderActivity(); renderReminders(); syncSwatchActive();
+  renderCalendar(); renderCalPanel();
 }
 
 /* ================= actions ================= */
@@ -718,6 +918,18 @@ function logActivity(text){
   state.activity = state.activity || [];
   state.activity.push({ text, time: new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}) });
   if(state.activity.length > 40) state.activity = state.activity.slice(-40);
+}
+
+// Keeps state.history[today][p] in sync with the live habit list, so the
+// calendar always reflects today's progress even before midnight rolls it over.
+function recordHistory(){
+  state.history = state.history || {};
+  const t = todayStr();
+  state.history[t] = state.history[t] || {};
+  [1,2].forEach(p=>{
+    const list = state.habits[p] || [];
+    state.history[t][p] = { done: list.filter(h=>h.done).length, total: list.length };
+  });
 }
 
 function toggleHabit(p, id){
@@ -731,6 +943,7 @@ function toggleHabit(p, id){
     h.done = false; h.streak = Math.max(0, h.streak-1);
     state.gardenPoints = Math.max(0, state.gardenPoints-1);
   }
+  recordHistory();
   pushState();
 }
 function addHabit(p){
@@ -739,9 +952,10 @@ function addHabit(p){
   if(!name) return;
   state.habits[p].push({ id: cryptoId(), name, streak:0, done:false, lastDone:null });
   input.value = '';
+  recordHistory();
   pushState();
 }
-function delHabit(p, id){ state.habits[p] = state.habits[p].filter(x=>x.id!==id); pushState(); }
+function delHabit(p, id){ state.habits[p] = state.habits[p].filter(x=>x.id!==id); recordHistory(); pushState(); }
 
 function addEntry(){
   const text = document.getElementById('entryText').value.trim();
@@ -894,6 +1108,7 @@ document.getElementById('qmLogout').onclick = ()=>{
 
 /* ================= init ================= */
 buildSwatches();
+populateEventHourSelects();
 newPrompt();
 renderGate();
 if(householdId) startSync();
