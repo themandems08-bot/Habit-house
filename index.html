@@ -52,6 +52,7 @@
   .gate-card .switcher{ margin-top:14px; text-align:center; font-size:12.5px; color: rgba(36,49,42,0.55); }
   .gate-card .switcher button{ background:none;border:none;color:var(--berry); text-decoration:underline; font-size:12.5px; padding:0; }
   .gate-error{ color: var(--berry); font-size:12.5px; margin-top:10px; }
+  .gate-error.ok{ color: var(--moss); }
   .gate-note{ font-size:11.5px; color: rgba(36,49,42,0.45); margin-top:16px; line-height:1.5; }
   .pin-hint{ font-size:11.5px; color: rgba(36,49,42,0.45); margin-top:4px; }
   .who-existing{ font-size:12.5px; color: rgba(36,49,42,0.6); margin: 4px 0 0; }
@@ -353,6 +354,12 @@
   <div class="swatches" id="swatches"></div>
   <label>Custom color</label>
   <input type="color" id="customColor">
+  <label>Change your PIN</label>
+  <input type="text" id="pinCurrent" placeholder="Current PIN" inputmode="numeric" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <input type="text" id="pinNew" placeholder="New PIN (4-8 digits)" inputmode="numeric" maxlength="8" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" style="margin-top:8px;">
+  <input type="text" id="pinConfirm" placeholder="Confirm new PIN" inputmode="numeric" maxlength="8" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" style="margin-top:8px;">
+  <button class="switch-btn" id="pinSaveBtn" style="border-color:var(--accent); color:var(--accent);">Save new PIN</button>
+  <div id="pinMsg" class="gate-error" style="margin-top:6px;"></div>
   <button class="switch-btn" id="switchHouseholdBtn">Switch household code</button>
   <button class="logout-btn" id="logoutBtn">Log out of this device</button>
   <button class="reset-btn" id="resetBtn">Reset all data for this household</button>
@@ -601,7 +608,7 @@ function gateHouseholdForm(){
     <h1>Habit House</h1>
     <p class="lede">Enter your household code. Use the exact same one on both phones.</p>
     <label>Household code</label>
-    <input type="text" id="gateHousehold" placeholder="e.g. og-and-mimi-2026" autocomplete="off">
+    <input type="text" id="gateHousehold" placeholder="e.g. og-and-mimi-2026" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore>
     <button class="primary" id="gateHouseholdBtn">Continue</button>
     <p class="gate-note">This is just a shared name for your two-person space — pick something only you two would guess.</p>
   </div>`;
@@ -614,11 +621,11 @@ function gateSignupForm(slot){
     <h1>Set up your profile</h1>
     <p class="lede">${other ? `${escapeHtml(other.name)} (@${escapeHtml(other.username)}) already set up — you're the second sign-up.` : "You're the first to sign up on this household."}</p>
     <label>Your name</label>
-    <input type="text" id="suName" placeholder="e.g. Osei" maxlength="20" autocomplete="off">
+    <input type="text" id="suName" placeholder="e.g. Osei" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" data-lpignore="true" data-1p-ignore>
     <label>Username</label>
-    <input type="text" id="suUsername" placeholder="e.g. osei" maxlength="20" autocomplete="off">
+    <input type="text" id="suUsername" placeholder="e.g. osei" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore>
     <label>4-digit number (your PIN)</label>
-    <input type="text" id="suPin" placeholder="e.g. 4821" inputmode="numeric" maxlength="8" autocomplete="off">
+    <input type="text" id="suPin" placeholder="e.g. 4821" inputmode="numeric" maxlength="8" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore>
     <p class="pin-hint">Just a simple lock so a stranger can't open your log — not bank-level security.</p>
     <button class="primary" id="suBtn">Sign up</button>
     <div id="gateErr" class="gate-error"></div>
@@ -637,7 +644,7 @@ function gateLoginForm(){
     <label>You are</label>
     <select id="liUsername">${opts}</select>
     <label>Your PIN</label>
-    <input type="text" id="liPin" inputmode="numeric" maxlength="8" autocomplete="off">
+    <input type="text" id="liPin" inputmode="numeric" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore>
     <button class="primary" id="liBtn">Log in</button>
     <div id="gateErr" class="gate-error"></div>
     <div class="switcher"><button id="switchCodeLink">Wrong household code? Switch it</button></div>
@@ -1026,7 +1033,12 @@ document.getElementById('customColor').addEventListener('input', e=>{ state.acce
 
 const drawer = document.getElementById('drawer');
 const backdrop = document.getElementById('backdrop');
-function openDrawer(){ drawer.classList.add('open'); backdrop.classList.add('open'); }
+function openDrawer(){
+  drawer.classList.add('open'); backdrop.classList.add('open');
+  document.getElementById('pinMsg').textContent = '';
+  document.getElementById('pinMsg').classList.remove('ok');
+  ['pinCurrent','pinNew','pinConfirm'].forEach(id=>{ document.getElementById(id).value=''; });
+}
 function closeDrawer(){ drawer.classList.remove('open'); backdrop.classList.remove('open'); }
 document.getElementById('settingsBtn').onclick = openDrawer;
 document.getElementById('drawerClose').onclick = closeDrawer;
@@ -1038,6 +1050,29 @@ document.getElementById('switchHouseholdBtn').onclick = ()=>{
   }
 };
 document.getElementById('logoutBtn').onclick = ()=>{ clearAuth(); closeDrawer(); renderGate(); };
+
+document.getElementById('pinSaveBtn').onclick = ()=>{
+  const msg = document.getElementById('pinMsg');
+  msg.classList.remove('ok');
+  if(!authInfo){ msg.textContent = 'Not signed in.'; return; }
+  const prof = state.profiles[authInfo.slot];
+  const current = document.getElementById('pinCurrent').value.trim();
+  const next = document.getElementById('pinNew').value.trim();
+  const confirmPin = document.getElementById('pinConfirm').value.trim();
+  if(!current || !next || !confirmPin){ msg.textContent = 'Fill in all three fields.'; return; }
+  if(!prof || current !== prof.pin){ msg.textContent = 'Current PIN is incorrect.'; return; }
+  if(!/^\d{4,8}$/.test(next)){ msg.textContent = 'New PIN should be 4-8 digits.'; return; }
+  if(next !== confirmPin){ msg.textContent = "New PIN and confirmation don't match."; return; }
+  prof.pin = next;
+  // Your username/login slot doesn't change — no need to sign in again.
+  pushState();
+  document.getElementById('pinCurrent').value = '';
+  document.getElementById('pinNew').value = '';
+  document.getElementById('pinConfirm').value = '';
+  msg.textContent = 'PIN updated.';
+  msg.classList.add('ok');
+};
+
 document.getElementById('resetBtn').onclick = ()=>{
   if(confirm('Reset everything for this household? Both of you will need to sign up again.')){
     state = defaultState();
