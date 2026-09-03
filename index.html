@@ -157,9 +157,40 @@
 
   footer{ text-align:center; font-size:12px; color: rgba(36,49,42,0.4); padding: 30px 20px 10px; }
   .hidden{ display:none !important; }
+
+  /* ---------- always-on quick menu ---------- */
+  .quick-menu-btn{
+    position:fixed; top:16px; right:16px; z-index:60;
+    background: var(--card); border:1.5px solid var(--line); width:42px; height:42px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:17px; box-shadow: 0 2px 8px rgba(36,49,42,0.12);
+  }
+  .quick-menu-btn:hover{ border-color: var(--accent); }
+  .quick-menu{
+    position:fixed; top:64px; right:16px; z-index:60;
+    background: var(--card); border:1px solid var(--line); border-radius: var(--radius);
+    padding: 14px; width: 240px; box-shadow: 0 6px 20px rgba(36,49,42,0.18);
+  }
+  .quick-menu .qm-status{ font-size:12px; color: rgba(36,49,42,0.55); margin-bottom:10px; line-height:1.5; }
+  .quick-menu .qm-status b{ color:var(--ink); }
+  .quick-menu button{
+    display:block; width:100%; text-align:left; background:none; border:none;
+    padding:9px 4px; font-size:14px; color:var(--ink); border-top:1px solid var(--line);
+  }
+  .quick-menu button:first-of-type{ border-top:none; }
+  .quick-menu button:hover{ color: var(--accent); }
 </style>
 </head>
 <body>
+
+<button class="quick-menu-btn" id="quickMenuBtn" aria-label="Menu">☰</button>
+<div class="quick-menu hidden" id="quickMenu">
+  <div class="qm-status" id="qmStatus"></div>
+  <button id="qmSwitch">Enter / switch household code</button>
+  <button id="qmSignup">Sign up</button>
+  <button id="qmLogin">Log in</button>
+  <button id="qmLogout">Log out of this device</button>
+</div>
 
 <div id="gate" class="gate"></div>
 
@@ -423,9 +454,21 @@ function startSync(){
 }
 
 /* ================= gate (sign up / log in) ================= */
+function syncQuickMenuVisibility(){
+  const btn = document.getElementById('quickMenuBtn');
+  if(!btn) return;
+  if(authInfo){ btn.classList.add('hidden'); closeQuickMenuSafe(); }
+  else{ btn.classList.remove('hidden'); }
+}
+function closeQuickMenuSafe(){
+  const m = document.getElementById('quickMenu');
+  if(m) m.classList.add('hidden');
+}
+
 function renderGate(){
   const gate = document.getElementById('gate');
   const app = document.getElementById('appMain');
+  syncQuickMenuVisibility();
 
   if(!householdId){
     gate.innerHTML = gateHouseholdForm();
@@ -789,6 +832,64 @@ document.getElementById('resetBtn').onclick = ()=>{
     closeDrawer();
     renderGate();
   }
+};
+
+/* ================= always-on quick menu ================= */
+const quickMenuBtn = document.getElementById('quickMenuBtn');
+const quickMenu = document.getElementById('quickMenu');
+
+function openQuickMenu(){
+  const statusEl = document.getElementById('qmStatus');
+  const houseLine = householdId ? `Household: <b>${escapeHtml(householdId)}</b>` : 'No household code set yet';
+  const whoLine = authInfo ? `Signed in as <b>${escapeHtml(authInfo.username)}</b>` : 'Not signed in on this device';
+  statusEl.innerHTML = houseLine + '<br>' + whoLine;
+  quickMenu.classList.remove('hidden');
+}
+function closeQuickMenu(){ quickMenu.classList.add('hidden'); }
+
+quickMenuBtn.onclick = (e)=>{
+  e.stopPropagation();
+  quickMenu.classList.contains('hidden') ? openQuickMenu() : closeQuickMenu();
+};
+document.addEventListener('click', (e)=>{
+  if(!quickMenu.classList.contains('hidden') && !quickMenu.contains(e.target) && e.target !== quickMenuBtn){
+    closeQuickMenu();
+  }
+});
+
+function showGateForm(html){
+  clearAuth();
+  const gate = document.getElementById('gate');
+  gate.innerHTML = html;
+  gate.classList.remove('hidden');
+  document.getElementById('appMain').classList.add('hidden');
+  wireGateForm();
+}
+
+document.getElementById('qmSwitch').onclick = ()=>{
+  closeQuickMenu();
+  switchHousehold();
+};
+document.getElementById('qmSignup').onclick = ()=>{
+  closeQuickMenu();
+  if(!householdId){ alert('Enter your household code first.'); return; }
+  if(!remoteLoaded){ alert('Still connecting to your household — try again in a moment.'); return; }
+  const emptySlot = !state.profiles[1] ? 1 : (!state.profiles[2] ? 2 : null);
+  if(!emptySlot){ alert('Both spots in this household are already signed up. Try Log in instead.'); return; }
+  showGateForm(gateSignupForm(emptySlot));
+};
+document.getElementById('qmLogin').onclick = ()=>{
+  closeQuickMenu();
+  if(!householdId){ alert('Enter your household code first.'); return; }
+  if(!remoteLoaded){ alert('Still connecting to your household — try again in a moment.'); return; }
+  if(!state.profiles[1] && !state.profiles[2]){ alert('No one has signed up on this household yet. Try Sign up instead.'); return; }
+  showGateForm(gateLoginForm());
+};
+document.getElementById('qmLogout').onclick = ()=>{
+  closeQuickMenu();
+  if(!authInfo){ alert('You are not signed in on this device.'); return; }
+  clearAuth();
+  renderGate();
 };
 
 /* ================= init ================= */
