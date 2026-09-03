@@ -413,6 +413,7 @@ function renderGate(){
   if(!householdId){
     gate.innerHTML = gateHouseholdForm();
     gate.classList.remove('hidden'); app.classList.add('hidden');
+    wireGateForm();
     return;
   }
   if(!remoteLoaded){
