@@ -152,6 +152,7 @@
   .swatch.active{ border-color: var(--ink); }
   .drawer input[type=color]{ width:100%; height:38px; border:1px solid var(--line); border-radius:8px; background:none; padding:2px; }
   .drawer-close{ position:absolute; top:18px; right:18px; background:none;border:none;font-size:20px;color:var(--ink); }
+  .switch-btn{ margin-top:12px; width:100%; padding:10px; border:1px solid var(--line); color:var(--ink); background:none; border-radius:8px; font-size:13px; }
   .reset-btn, .logout-btn{ margin-top:12px; width:100%; padding:10px; border:1px solid rgba(162,78,92,0.4); color:var(--berry); background:none; border-radius:8px; font-size:13px; }
 
   footer{ text-align:center; font-size:12px; color: rgba(36,49,42,0.4); padding: 30px 20px 10px; }
@@ -242,6 +243,7 @@
   <div class="swatches" id="swatches"></div>
   <label>Custom color</label>
   <input type="color" id="customColor">
+  <button class="switch-btn" id="switchHouseholdBtn">Switch household code</button>
   <button class="logout-btn" id="logoutBtn">Log out of this device</button>
   <button class="reset-btn" id="resetBtn">Reset all data for this household</button>
 </div>
@@ -333,6 +335,20 @@ function loadAuth(){
 function saveAuth(a){ authInfo = a; localStorage.setItem(AUTH_KEY, JSON.stringify(a)); }
 function clearAuth(){ authInfo = null; localStorage.removeItem(AUTH_KEY); }
 
+let intentionalSocketClose = false;
+function switchHousehold(){
+  if(socket){
+    intentionalSocketClose = true;
+    socket.close();
+    socket = null;
+  }
+  clearAuth();
+  householdId = '';
+  localStorage.removeItem(HOUSEHOLD_KEY);
+  remoteLoaded = false;
+  renderGate();
+}
+
 function pushState(){
   saveLocal();
   if(wsEnabled && householdId && !suppressWrite && socket && socket.readyState === WebSocket.OPEN){
@@ -397,6 +413,7 @@ function startSync(){
 
   socket.addEventListener('close', ()=>{
     document.getElementById('syncDot').classList.remove('live');
+    if(intentionalSocketClose){ intentionalSocketClose = false; return; }
     // retry with backoff, up to ~30s
     wsRetryDelay = Math.min(wsRetryDelay * 1.6, 30000);
     setTimeout(()=>{ if(householdId) startSync(); }, wsRetryDelay);
@@ -417,8 +434,9 @@ function renderGate(){
     return;
   }
   if(!remoteLoaded){
-    gate.innerHTML = `<div class="gate-card"><h1>Connecting…</h1><p class="lede">Reaching your household "${escapeHtml(householdId)}".</p></div>`;
+    gate.innerHTML = `<div class="gate-card"><h1>Connecting…</h1><p class="lede">Reaching your household "${escapeHtml(householdId)}".</p><div class="switcher"><button id="switchCodeLink">Wrong code? Switch household</button></div></div>`;
     gate.classList.remove('hidden'); app.classList.add('hidden');
+    wireGateForm();
     return;
   }
   // recheck auth still valid against current state
@@ -466,6 +484,7 @@ function gateSignupForm(slot){
     <button class="primary" id="suBtn">Sign up</button>
     <div id="gateErr" class="gate-error"></div>
     <div class="switcher"><button id="toLoginBtn">Already signed up? Log in instead</button></div>
+    <div class="switcher"><button id="switchCodeLink">Wrong household code? Switch it</button></div>
   </div>`;
 }
 
@@ -482,6 +501,7 @@ function gateLoginForm(){
     <input type="text" id="liPin" inputmode="numeric" maxlength="8" autocomplete="off">
     <button class="primary" id="liBtn">Log in</button>
     <div id="gateErr" class="gate-error"></div>
+    <div class="switcher"><button id="switchCodeLink">Wrong household code? Switch it</button></div>
   </div>`;
 }
 
@@ -532,6 +552,12 @@ function wireGateForm(){
     saveAuth({ household: householdId, slot, username });
     renderGate();
     renderAll();
+  };
+  const switchCode = document.getElementById('switchCodeLink');
+  if(switchCode) switchCode.onclick = ()=>{
+    if(confirm('Switch to a different household code?')){
+      switchHousehold();
+    }
   };
 }
 
@@ -748,6 +774,12 @@ function closeDrawer(){ drawer.classList.remove('open'); backdrop.classList.remo
 document.getElementById('settingsBtn').onclick = openDrawer;
 document.getElementById('drawerClose').onclick = closeDrawer;
 backdrop.onclick = closeDrawer;
+document.getElementById('switchHouseholdBtn').onclick = ()=>{
+  if(confirm('Switch to a different household code? You\'ll need to enter the code and (if you\'re new to it) sign up again.')){
+    closeDrawer();
+    switchHousehold();
+  }
+};
 document.getElementById('logoutBtn').onclick = ()=>{ clearAuth(); closeDrawer(); renderGate(); };
 document.getElementById('resetBtn').onclick = ()=>{
   if(confirm('Reset everything for this household? Both of you will need to sign up again.')){
